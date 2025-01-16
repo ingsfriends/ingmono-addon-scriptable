@@ -12,37 +12,92 @@ widget.backgroundColor = Device.isUsingDarkAppearance() ? darkModeColor : lightM
 const response = await new Request(SPREADSHEET_URL).loadString();
 const rows = response.split("\n").map(row => row.split(","));
 
-// 오늘과 내일의 날짜 데이터를 가져옴
+// 오늘과 내일의 날짜 데이터를 가져온당
+// - 행렬이 추가될 일이 없음으로 인덱스들을 하드코딩 해버린당
+// - 뻑나면 사용하는 잉모노가 그때 알아서 하겠지 뭐 히히
 const today = new Date();
-const tomorrow = new Date();
-tomorrow.setDate(today.getDate() + 1);
+const todayYear = today.getFullYear();
+const todayMonth = today.getMonth()+1;
+const todayDay = today.getDay();
+
+const dataYear = rows[0][3];
+const dataMonth = rows[0][13];
 
 const formatDate = date => `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 const formatKoreanDate = date => `${date.getMonth() + 1}월 ${date.getDate()}일`;
-const todayStr = formatDate(today);
-const tomorrowStr = formatDate(tomorrow);
 
-const todayRow = rows.find(row => row[0] === todayStr);
-const tomorrowRow = rows.find(row => row[0] === tomorrowStr);
+if (todayYear == dataYear && todayMonth == dataMonth) {
+  // 오늘 날짜 기준 연도 및 월 기준으로 맞는 엑셀 데이터!
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
 
-// 오늘의 주제와 상태를 결정
-let title = "";
-let subtitle = "";
-if (todayRow) {
-  if (todayRow[1]?.trim() === "휴방") {
+  // 엑셀에 새로운 행렬이 추가되지 않는 가정 하, 필요한 칸들만 `days`와 `values`에 담는당
+  const dayRowIndices = [2, 5, 8, 11, 14, 17];
+  const valueRowIndices = [3, 6, 9, 12, 15, 18];
+  const allColumnIndices = [3, 8, 13, 18, 23, 28, 33];
+
+  const daysAll = [];
+  const valuesAll = [];
+
+  dayRowIndices.forEach(rowIdx => {
+    allColumnIndices.forEach(colIdx => {
+      daysAll.push(rows[rowIdx][colIdx].trim());
+    });
+  });
+
+  valueRowIndices.forEach(rowIdx => {
+    allColumnIndices.forEach(colIdx => {
+      valuesAll.push(rows[rowIdx][colIdx].trim());
+    });
+  });
+
+  const trimIndices = daysAll.map((day, idx) => day == 1 ? idx : -1).filter(idx => idx !== -1);
+  let days, values;
+
+  if (trimIndices.length === 2) {
+    const x = trimIndices[0];
+    const y = trimIndices[1];
+    days = daysAll.slice(trimIndices[0], trimIndices[1]);
+    values = valuesAll.slice(trimIndices[0], trimIndices[1]);
+  } else {
+    const x = trimIndices[0];
+    days = daysAll.slice(trimIndices[0]);
+    values = valuesAll.slice(trimIndices[0]);
+  }
+
+  let title = "";
+  let subtitle = "";
+  let nextSchedule = "";
+  let nextTopic = "";
+  const todayIndex = days.indexOf(todayDay);
+
+  // 오늘의 주제와 상태를 결정
+  if (days[todayIndex] === "휴방") {
     title = "오늘은 휴방!";
   } else {
     title = "방송하는 날!";
-    subtitle = `오늘의 주제: ${todayRow[1]?.trim() || "미정"}`;
+    subtitle = `오늘의 주제: ${values[todayIndex] || "미정"}`;
+  }
+
+  // 다음 주제와 일정 설정
+  if (todayIndex < days.length) {
+    // 다음 일정을 가져올 수 있음!
+    nextSchedule = `다음 일정: ${formatKoreanDate(tomorrow)}`;
+    if (days[todayIndex+1] === "휴방") {
+      nextTopic = `다음날은 휴방!`;
+    } else {
+      nextTopic = `다음 주제: ${values[todayIndex+1] || "미정"}`;
+    }
+  } else {
+    // 다음 일정이 다음 달로 넘어가서 이 코드로는 가져올 수 없음 ㅠㅠ
   }
 } else {
-  title = "방송하는 날!";
-  subtitle = "오늘의 주제: 미정";
+  // 오늘 날짜 기준 연도 및 월 기준으로 맞지 않는 엑셀 데이터 ㅠㅠ
+  var title = "이번 달 일정을 못 가져왔어요 ㅠㅠ";
+  var subtitle = "URL을 갱신해보세요!";
+  var nextSchedule = "";
+  var nextTopic = "";
 }
-
-// 다음 주제와 일정 설정
-const nextSchedule = `다음 일정: ${formatKoreanDate(tomorrow)}`;
-const nextTopic = `다음 주제: ${tomorrowRow ? (tomorrowRow[1]?.trim() || "미정") : "미정"}`;
 
 // 이미지와 텍스트를 위한 수평 레이아웃 생성
 const mainStack = widget.addStack();
@@ -76,15 +131,19 @@ if (subtitle) {
   subtitleText.leftAlignText();
 }
 
-textStack.addSpacer(10);
-const nextScheduleText = textStack.addText(nextSchedule);
-nextScheduleText.font = Font.systemFont(16); // 폰트 크기를 16로 설정
-nextScheduleText.leftAlignText();
+if (nextSchedule) {
+  textStack.addSpacer(10);
+  const nextScheduleText = textStack.addText(nextSchedule);
+  nextScheduleText.font = Font.systemFont(16); // 폰트 크기를 16로 설정
+  nextScheduleText.leftAlignText();
+}
 
-textStack.addSpacer(5);
-const nextTopicText = textStack.addText(nextTopic);
-nextTopicText.font = Font.systemFont(16); // 폰트 크기를 16로 설정
-nextTopicText.leftAlignText();
+if (nextTopic) {
+  textStack.addSpacer(5);
+  const nextTopicText = textStack.addText(nextTopic);
+  nextTopicText.font = Font.systemFont(16); // 폰트 크기를 16로 설정
+  nextTopicText.leftAlignText();
+}
 
 // 위젯을 화면에 표시
 if (config.runsInWidget) {
