@@ -18,7 +18,7 @@ const rows = response.split("\n").map(row => row.split(","));
 const today = new Date();
 const todayYear = today.getFullYear();
 const todayMonth = today.getMonth()+1;
-const todayDay = today.getDay();
+const todayDay = today.getDate();
 
 const dataYear = rows[0][3];
 const dataMonth = rows[0][13];
@@ -73,7 +73,7 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
   const todayIndex = days.indexOf(todayDay);
 
   // 오늘의 주제와 상태를 결정
-  if (days[todayIndex] === "휴방") {
+  if (values[todayIndex] === "휴방") {
     title = "오늘은 휴방!";
   } else {
     title = "방송하는 날!";
@@ -84,7 +84,7 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
   if (todayIndex < days.length) {
     // 다음 일정을 가져올 수 있음!
     nextSchedule = `다음 일정: ${formatKoreanDate(tomorrow)}`;
-    if (days[todayIndex+1] === "휴방") {
+    if (values[todayIndex+1] === "휴방") {
       nextTopic = `다음날은 휴방!`;
     } else {
       nextTopic = `다음 주제: ${values[todayIndex+1] || "미정"}`;
