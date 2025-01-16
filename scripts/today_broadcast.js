@@ -26,6 +26,11 @@ const dataMonth = rows[0][13];
 const formatDate = date => `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 const formatKoreanDate = date => `${date.getMonth() + 1}월 ${date.getDate()}일`;
 
+let title = "";
+let subtitle = "";
+let nextSchedule = "";
+let nextTopic = "";
+
 if (todayYear == dataYear && todayMonth == dataMonth) {
   // 오늘 날짜 기준 연도 및 월 기준으로 맞는 엑셀 데이터!
   const tomorrow = new Date();
@@ -65,10 +70,6 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
     values = valuesAll.slice(trimIndices[0]);
   }
 
-  let title = "";
-  let subtitle = "";
-  let nextSchedule = "";
-  let nextTopic = "";
   const todayIndex = days.indexOf(todayDay);
 
   // 오늘의 주제와 상태를 결정
@@ -93,10 +94,10 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
   }
 } else {
   // 오늘 날짜 기준 연도 및 월 기준으로 맞지 않는 엑셀 데이터 ㅠㅠ
-  var title = "이번 달 일정을 못 가져왔어요 ㅠㅠ";
-  var subtitle = "URL을 갱신해보세요!";
-  var nextSchedule = "";
-  var nextTopic = "";
+  title = "이번 달 일정을 못 가져왔어요 ㅠㅠ";
+  subtitle = "URL을 갱신해보세요!";
+  nextSchedule = "";
+  nextTopic = "";
 }
 
 // 이미지와 텍스트를 위한 수평 레이아웃 생성
