@@ -70,7 +70,7 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
     values = valuesAll.slice(trimIndices[0]);
   }
 
-  const todayIndex = days.indexOf(todayDay);
+  const todayIndex = days.indexOf(todayDay.toString());
 
   // 오늘의 주제와 상태를 결정
   if (values[todayIndex] === "휴방") {
