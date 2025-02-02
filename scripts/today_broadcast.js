@@ -1,4 +1,4 @@
-const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1FOZdya-n8Rv2GMBOqecv_rOA8swGGLUJE6hA_LYv6wg/export?format=csv&gid=157422094";
+const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1FOZdya-n8Rv2GMBOqecv_rOA8swGGLUJE6hA_LYv6wg/export?format=csv&";
 const IMAGE_URL = "https://cafeptthumb-phinf.pstatic.net/MjAyNDEyMjVfMjUz/MDAxNzM1MTAxOTExMDUy._ycsNE4JzaDfCfzEvNiK8Cl4UO-yPYuw4KXr2gkuDTgg.Nr8qrJ-ts8SYFpXAl0mcQ2knGK5kCjhzDrjHzRzwW20g.JPEG/IMG_3242.JPG?type=w1600";
 
 const widget = new ListWidget();
