@@ -1,4 +1,4 @@
-const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1FOZdya-n8Rv2GMBOqecv_rOA8swGGLUJE6hA_LYv6wg/export?format=csv&";
+const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1FOZdya-n8Rv2GMBOqecv_rOA8swGGLUJE6hA_LYv6wg/export?format=csv";
 const IMAGE_URL = "https://cafeptthumb-phinf.pstatic.net/MjAyNDEyMjVfMjUz/MDAxNzM1MTAxOTExMDUy._ycsNE4JzaDfCfzEvNiK8Cl4UO-yPYuw4KXr2gkuDTgg.Nr8qrJ-ts8SYFpXAl0mcQ2knGK5kCjhzDrjHzRzwW20g.JPEG/IMG_3242.JPG?type=w1600";
 
 const widget = new ListWidget();
@@ -23,7 +23,6 @@ const todayDay = today.getDate();
 const dataYear = rows[0][3];
 const dataMonth = rows[0][13];
 
-const formatDate = date => `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 const formatKoreanDate = date => `${date.getMonth() + 1}월 ${date.getDate()}일`;
 
 let title = "";
@@ -39,65 +38,36 @@ if (todayYear == dataYear && todayMonth == dataMonth) {
   // 엑셀에 새로운 행렬이 추가되지 않는 가정 하, 필요한 칸들만 `days`와 `values`에 담는당
   const dayRowIndices = [2, 5, 8, 11, 14, 17];
   const valueRowIndices = [3, 6, 9, 12, 15, 18];
-  const allColumnIndices = [3, 8, 13, 18, 23, 28, 33];
+  const columnIndices = [3, 8, 13, 18, 23, 28, 33];
 
-  const daysAll = [];
-  const valuesAll = [];
+  const days = dayRowIndices.flatMap(rowIdx => columnIndices.map(colIdx => rows[rowIdx][colIdx].trim()));
+  const values = valueRowIndices.flatMap(rowIdx => columnIndices.map(colIdx => rows[rowIdx][colIdx].trim()));
 
-  dayRowIndices.forEach(rowIdx => {
-    allColumnIndices.forEach(colIdx => {
-      daysAll.push(rows[rowIdx][colIdx].trim());
-    });
-  });
+  // 이번 달의 1일부터 마지막 날까지 필터링한당
+  const firstDayIndex = days.findIndex(day => day === "1");
+  const lastDayIndex = days.slice(firstDayIndex + 1).findIndex(day => day === "1");
+  const rangeEnd = lastDayIndex !== -1 ? firstDayIndex + 1 + lastDayIndex : days.length;
 
-  valueRowIndices.forEach(rowIdx => {
-    allColumnIndices.forEach(colIdx => {
-      valuesAll.push(rows[rowIdx][colIdx].trim());
-    });
-  });
+  const daysInMonth = days.slice(firstDayIndex, rangeEnd);
+  const valuesInMonth = values.slice(firstDayIndex, rangeEnd);
 
-  const trimIndices = daysAll.map((day, idx) => day == 1 ? idx : -1).filter(idx => idx !== -1);
-  let days, values;
-
-  if (trimIndices.length === 2) {
-    const x = trimIndices[0];
-    const y = trimIndices[1];
-    days = daysAll.slice(trimIndices[0], trimIndices[1]);
-    values = valuesAll.slice(trimIndices[0], trimIndices[1]);
-  } else {
-    const x = trimIndices[0];
-    days = daysAll.slice(trimIndices[0]);
-    values = valuesAll.slice(trimIndices[0]);
-  }
-
-  const todayIndex = days.indexOf(todayDay.toString());
+  const todayIndex = daysInMonth.indexOf(todayDay.toString());
 
   // 오늘의 주제와 상태를 결정
-  if (values[todayIndex] === "휴방") {
-    title = "오늘은 휴방!";
-  } else {
-    title = "방송하는 날!";
-    subtitle = `오늘의 주제: ${values[todayIndex] || "미정"}`;
+  if (todayIndex !== -1) {
+    title = valuesInMonth[todayIndex] === "휴방" ? "오늘은 휴방!" : "방송하는 날!";
+    subtitle = valuesInMonth[todayIndex] !== "휴방" ? `오늘의 주제: ${valuesInMonth[todayIndex] || "미정"}` : "";
   }
 
   // 다음 주제와 일정 설정
-  if (todayIndex < days.length) {
-    // 다음 일정을 가져올 수 있음!
+  if (todayIndex < daysInMonth.length - 1) {
     nextSchedule = `다음 일정: ${formatKoreanDate(tomorrow)}`;
-    if (values[todayIndex+1] === "휴방") {
-      nextTopic = `다음날은 휴방!`;
-    } else {
-      nextTopic = `다음 주제: ${values[todayIndex+1] || "미정"}`;
-    }
-  } else {
-    // 다음 일정이 다음 달로 넘어가서 이 코드로는 가져올 수 없음 ㅠㅠ
+    nextTopic = valuesInMonth[todayIndex + 1] === "휴방" ? "다음날은 휴방!" : `다음 주제: ${valuesInMonth[todayIndex + 1] || "미정"}`;
   }
 } else {
   // 오늘 날짜 기준 연도 및 월 기준으로 맞지 않는 엑셀 데이터 ㅠㅠ
   title = "이번 달 일정을 못 가져왔어요 ㅠㅠ";
   subtitle = "URL을 갱신해보세요!";
-  nextSchedule = "";
-  nextTopic = "";
 }
 
 // 이미지와 텍스트를 위한 수평 레이아웃 생성
