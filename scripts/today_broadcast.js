@@ -1,3 +1,64 @@
+function parseCSV(csvText) {
+  const rows = [];
+  let currentRow = [];
+  let currentValue = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < csvText.length) {
+    const char = csvText[i];
+    const nextChar = csvText[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        currentValue += '"';
+        i += 2;
+      } else if (char === '"') {
+        inQuotes = false;
+        i++;
+      } else {
+        currentValue += char;
+        i++;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+        i++;
+      } else if (char === ',') {
+        currentRow.push(currentValue);
+        currentValue = '';
+        i++;
+      } else if (char === '\r' && nextChar === '\n') {
+        currentRow.push(currentValue);
+        rows.push(currentRow);
+        currentRow = [];
+        currentValue = '';
+        i += 2;
+      } else if (char === '\n' || char === '\r') {
+        currentRow.push(currentValue);
+        rows.push(currentRow);
+        currentRow = [];
+        currentValue = '';
+        i++;
+      } else {
+        currentValue += char;
+        i++;
+      }
+    }
+  }
+
+  // 마지막 줄 처리
+  if (currentValue.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentValue);
+    rows.push(currentRow);
+  }
+
+  return rows;
+}
+
+
+
+
 const SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1FOZdya-n8Rv2GMBOqecv_rOA8swGGLUJE6hA_LYv6wg/export?format=csv";
 const IMAGE_URL = "https://cafeptthumb-phinf.pstatic.net/MjAyNDEyMjVfMjUz/MDAxNzM1MTAxOTExMDUy._ycsNE4JzaDfCfzEvNiK8Cl4UO-yPYuw4KXr2gkuDTgg.Nr8qrJ-ts8SYFpXAl0mcQ2knGK5kCjhzDrjHzRzwW20g.JPEG/IMG_3242.JPG?type=w1600";
 
@@ -9,8 +70,11 @@ const lightModeColor = new Color("#79797a");
 widget.backgroundColor = Device.isUsingDarkAppearance() ? darkModeColor : lightModeColor;
 
 // 스프레드시트에서 데이터를 가져옴
-const response = await new Request(SPREADSHEET_URL).loadString();
-const rows = response.split("\n").map(row => row.split(","));
+// const response = await new Request(SPREADSHEET_URL).loadString();
+// const rows = response.split("\n").map(row => row.split(","));
+
+const text = await new Request(SPREADSHEET_URL).loadString();
+const rows = parseCSV(text);
 
 // 오늘과 내일의 날짜 데이터를 가져온당
 // - 행렬이 추가될 일이 없음으로 인덱스들을 하드코딩 해버린당
